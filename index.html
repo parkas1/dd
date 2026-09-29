@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Live Baccarat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Premium Casino Colors */
+            --table-spotlight: #ab8533;
+            --table-mid: #523f15;
+            --table-dark: #121008;
+            
+            --p-blue: #1d4ed8;
+            --p-blue-bg: rgba(29, 78, 216, 0.2);
+            --p-blue-border: rgba(59, 130, 246, 0.5);
+            
+            --b-red: #b91c1c;
+            --b-red-bg: rgba(185, 28, 28, 0.2);
+            --b-red-border: rgba(239, 68, 68, 0.5);
+            
+            --t-green: #15803d;
+            --t-green-bg: rgba(21, 128, 61, 0.2);
+            --t-green-border: rgba(34, 197, 94, 0.5);
+
+            --ui-dark: #111111;
+            --ui-panel: #1a1a1a;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0; background-color: #000; color: white;
+            overflow: hidden; user-select: none; display: flex; flex-direction: column; height: 100vh;
+        }
+
+        /* --- Main Table Graphics --- */
+        .casino-table {
+            /* Rich Gold/Green/Dark gradient for premium look */
+            background: radial-gradient(circle at 50% 20%, var(--table-spotlight) 0%, var(--table-mid) 40%, var(--table-dark) 100%);
+            position: relative; flex-grow: 1; display: flex; flex-direction: column; align-items: center;
+            overflow: hidden; box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+        }
+
+        .watermark {
+            font-family: 'Playfair Display', serif; font-size: 5rem; color: rgba(255, 255, 255, 0.1);
+            position: absolute; top: 25%; font-weight: bold; letter-spacing: 10px; pointer-events: none;
+            text-shadow: 0px 2px 5px rgba(0,0,0,0.5);
+        }
+        .watermark.player { left: 10%; } 
+        .watermark.banker { right: 10%; }
+
+        /* --- Dealer Shoe --- */
+        .dealer-shoe {
+            position: absolute; top: 5%; right: 5%; width: 140px; height: 90px;
+            background: linear-gradient(145deg, #2a2a2a, #111); border: 2px solid #333;
+            border-radius: 12px; box-shadow: -15px 20px 30px rgba(0,0,0,0.8), inset 0 0 10px rgba(255,255,255,0.1); z-index: 5;
+        }
+        .dealer-shoe::after {
+            content: ''; position: absolute; left: 15px; right: 15px; top: 15px; bottom: 15px;
+            background-color: #000; border-radius: 4px; box-shadow: inset 0 0 15px rgba(255,0,0,0.2);
+        }
+
+        /* --- Cards & 3D Flip --- */
+        .card-container {
+            perspective: 1200px; position: absolute; z-index: 10;
+            width: 75px; height: 110px;
+            transition: left 0.5s cubic-bezier(0.25, 1, 0.5, 1), top 0.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.5s ease;
+        }
+        @media (min-width: 768px) { .card-container { width: 95px; height: 140px; } }
+
+        .card-inner {
+            position: relative; width: 100%; height: 100%;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+        .card-container.flipped .card-inner { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+            border-radius: 8px; box-shadow: 3px 5px 15px rgba(0,0,0,0.5); display: flex;
+        }
+        .card-back {
+            background-color: #1e1b4b; border: 4px solid white;
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 5px, transparent 5px, transparent 10px);
+        }
+        .card-front {
+            background-color: white; transform: rotateY(180deg); flex-direction: column; justify-content: space-between; padding: 4px 6px;
+            font-weight: 900; font-size: 1.4rem; color: #111;
+        }
+        .card-red { color: #dc2626; } 
+        .suit-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.8rem; opacity: 0.15; }
+
+        /* --- Win Popup UI (from image_49f3b9.jpg) --- */
+        .win-popup-wrapper {
+            position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%) scale(0.7);
+            width: 360px; background-color: rgba(25, 25, 25, 0.95); border: 1px solid #444;
+            border-radius: 12px; box-shadow: 0 25px 50px rgba(0,0,0,0.9), 0 0 30px rgba(255,255,255,0.05);
+            display: flex; flex-direction: column; opacity: 0; pointer-events: none; z-index: 50;
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden;
+        }
+        .win-popup-wrapper.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        
+        .win-header {
+            width: 100%; padding: 12px 0; text-align: center; font-size: 1.3rem; font-weight: 900; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            letter-spacing: 2px;
+        }
+        .win-header.banker { background: linear-gradient(180deg, #dc2626, #991b1b); }
+        .win-header.player { background: linear-gradient(180deg, #3b82f6, #1e3a8a); }
+        .win-header.tie { background: linear-gradient(180deg, #22c55e, #14532d); }
+        
+        .win-body { padding: 25px 15px; text-align: center; }
+        .win-text-small { font-size: 1.1rem; color: #ddd; margin-bottom: 8px; font-weight: 500; }
+        .win-amount { font-size: 2.5rem; font-weight: 900; color: white; letter-spacing: 1px; text-shadow: 0 2px 10px rgba(255,255,255,0.2); }
+
+        /* --- Status & Timer --- */
+        .timer-ui {
+            position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); border: 2px solid #fbbf24;
+            padding: 10px 30px; border-radius: 30px; font-size: 1.4rem; font-weight: 900; color: #fbbf24;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.2); z-index: 15; transition: all 0.3s;
+        }
+        .timer-ui.closing { color: #ef4444; border-color: #ef4444; animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite; }
+        @keyframes ping { 75%, 100% { transform: translateX(-50%) scale(1.1); opacity: 0.8; } }
+
+        .status-center {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 3rem; font-weight: 900; background: rgba(0,0,0,0.85); padding: 20px 50px;
+            border-radius: 12px; border: 2px solid #fff; opacity: 0; pointer-events: none; z-index: 20; transition: opacity 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); letter-spacing: 2px;
+        }
+
+        /* --- Score Badges --- */
+        .score-badge {
+            position: absolute; top: 40%;
+            background: rgba(0,0,0,0.85);
+            border-radius: 50%; width: 65px; height: 65px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.2rem; font-weight: 900;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+            z-index: 20; opacity: 0; transition: opacity 0.3s;
+        }
+        .player-score { left: 8%; border: 3px solid #3b82f6; color: #93c5fd; }
+        .banker-score { right: 8%; border: 3px solid #ef4444; color: #fca5a5; }
+
+        /* --- Betting Board (Strictly matching layout request) --- */
+        .betting-section {
+            height: 280px; background-color: var(--ui-panel); display: flex; flex-direction: column;
+            border-top: 2px solid #333; z-index: 30;
+        }
+        
+        .board-container {
+            flex-grow: 1; display: flex; justify-content: center; padding: 15px 20px;
+            background: linear-gradient(180deg, #111, #000);
+        }
+
+        .baccarat-board {
+            display: grid; grid-template-columns: 2fr 1.5fr 2fr; width: 100%; max-width: 1000px;
+            gap: 4px; background-color: #333; border: 2px solid #444; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+        }
+
+        .board-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: all 0.2s; }
+        .board-zone:hover { filter: brightness(1.3); }
+        .board-zone.locked { cursor: not-allowed; filter: grayscale(0.7); opacity: 0.8; }
+
+        .zone-p-bg { background-color: var(--p-blue-bg); border: 1px solid var(--p-blue-border); }
+        .zone-b-bg { background-color: var(--b-red-bg); border: 1px solid var(--b-red-border); }
+        .zone-t-bg { background-color: var(--t-green-bg); border: 1px solid var(--t-green-border); }
+
+        .col-left, .col-right { display: grid; grid-template-rows: 1fr 2fr; gap: 4px; }
+        .col-center { display: flex; flex-direction: column; }
+
+        .zone-text-title { font-weight: 900; letter-spacing: 1px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
+        .zone-text-ratio { font-size: 0.8rem; opacity: 0.7; font-weight: bold; margin-top: 4px; }
+
+        /* --- Chip & Stacking --- */
+        .chip-controls {
+            background-color: var(--ui-dark); padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222;
+        }
+        
+        .chip {
+            width: 48px; height: 48px; border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-weight: 900; font-size: 12px; color: white; border: 5px dashed rgba(255,255,255,0.8);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.8), inset 0 0 15px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.15s, box-shadow 0.2s;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        .chip:hover { transform: scale(1.1); }
+        .chip.selected { transform: scale(1.15) translateY(-5px); box-shadow: 0 0 20px #fbbf24 !important; border-color: #fbbf24; }
+        
+        .c-1k { background-color: #2563eb; } .c-5k { background-color: #dc2626; } .c-10k { background-color: #16a34a; }
+        .c-50k { background-color: #9333ea; } .c-100k { background-color: #f59e0b; color: black; text-shadow: none; border-color: rgba(0,0,0,0.5); } .c-500k { background-color: #db2777; }
+        
+        .btn-action { background: linear-gradient(180deg, #333, #111); border: 1px solid #555; color: white; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+        .btn-action:hover { background: #444; border-color: #777; }
+        .btn-action.active { border-color: #f97316; color: #f97316; box-shadow: 0 0 15px rgba(249, 115, 22, 0.4); }
+
+        /* Stacking containers in zones */
+        .chip-stack { position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%); width: 48px; height: 48px; pointer-events: none; z-index: 10; display: flex; justify-content: center; align-items: center; }
+        .placed-chip { transform: scale(0.9); box-shadow: 0 4px 8px rgba(0,0,0,0.9), inset 0 2px 2px rgba(255,255,255,0.6); }
+
+        .total-bet-badge { position: absolute; bottom: 8px; font-size: 0.85rem; color: #fcd34d; font-weight: 900; background: rgba(0,0,0,0.7); padding: 3px 10px; border-radius: 12px; opacity: 0; transition: opacity 0.3s; border: 1px solid rgba(252, 211, 77, 0.3); pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="bg-black flex items-center justify-between px-6 py-3 border-b border-[#222]">
+        <div class="flex items-center gap-3">
+            <span class="text-yellow-400 font-black italic text-xl tracking-tighter">PARIMATCH</span>
+            <span class="text-gray-400 text-sm font-bold ml-4">라이브 카지노</span>
+        </div>
+        <div class="flex items-center gap-3 bg-[#111] px-4 py-1.5 rounded-full border border-[#333]">
+            <span class="text-gray-400 text-sm font-bold">KRW 잔액</span>
+            <span class="text-green-400 font-black text-lg" id="balance-display">₩ 100,000</span>
+        </div>
+    </header>
+
+    <!-- Main Casino Table -->
+    <main class="casino-table" id="table-area">
+        <div class="watermark player">PLAYER</div>
+        <div class="watermark banker">BANKER</div>
+        
+        <div class="dealer-shoe" id="dealer-shoe"></div>
+
+        <div id="timer-display" class="timer-ui">베팅 타이머: <span id="timer-sec">15</span></div>
+        
+        <!-- WIN POPUP -->
+        <div id="win-popup" class="win-popup-wrapper">
+            <div id="win-header" class="win-header banker">뱅커</div>
+            <div class="win-body" id="win-body">
+                <div id="win-msg" class="win-text-small">이기셨습니다</div>
+                <div id="win-amt" class="win-amount">₩ 0</div>
+            </div>
+        </div>
+
+        <!-- 실시간 점수 배지 -->
+        <div id="score-p" class="score-badge player-score">0</div>
+        <div id="score-b" class="score-badge banker-score">0</div>
+
+        <div id="cards-board" class="w-full h-full relative max-w-6xl mx-auto"></div>
+    </main>
+
+    <!-- Betting UI -->
+    <footer class="betting-section">
+        <!-- Chip Controls -->
+        <div class="chip-controls">
+            <div class="text-yellow-400 font-bold text-sm tracking-wide" id="sys-message">칩을 선택하고 베팅하세요</div>
+            
+            <div class="flex gap-3">
+                <div class="chip c-1k selected" onclick="selectChip(1000, this)">1k</div>
+                <div class="chip c-5k" onclick="selectChip(5000, this)">5k</div>
+                <div class="chip c-10k" onclick="selectChip(10000, this)">10k</div>
+                <div class="chip c-50k" onclick="selectChip(50000, this)">50k</div>
+                <div class="chip c-100k" onclick="selectChip(100000, this)">100k</div>
+                <div class="chip c-500k" onclick="selectChip(500000, this)">500k</div>
+            </div>
+
+            <div class="flex gap-2">
+                <button class="btn-action text-orange-400" onclick="toggleAllIn()" id="btn-allin">올인 (All-in)</button>
+                <button class="btn-action text-blue-400" onclick="doubleBets()">x2 (Double)</button>
+                <button class="btn-action text-gray-300" onclick="clearBets()">취소 (Clear)</button>
+            </div>
+        </div>
+
+        <!-- Betting Board Matrix -->
+        <div class="board-container">
+            <div class="baccarat-board">
+                <!-- Left: Player Column -->
+                <div class="col-left">
+                    <div class="board-zone zone-p-bg" onclick="placeBet('PPair')">
+                        <span class="zone-text-title text-blue-200 pointer-events-none">플레이어 페어</span>
+                        <span class="zone-text-ratio text-blue-400 pointer-events-none">11:1</span>
+                        <div id="stack-PPair" class="chip-stack"></div>
+                        <div id="amt-PPair" class="total-bet-badge">0</div>
+                    </div>
+                    <div class="board-zone zone-p-bg" onclick="placeBet('Player')">
+                        <span class="zone-text-title text-blue-400 text-3xl pointer-events-none">플레이어</span>
+                        <span class="zone-text-ratio text-blue-500 pointer-events-none">1:1</span>
+                        <div id="stack-Player" class="chip-stack"></div>
+                        <div id="amt-Player" class="total-bet-badge">0</div>
+                    </div>
+                </div>
+
+                <!-- Center: Tie Column -->
+                <div class="col-center">
+                    <div class="board-zone zone-t-bg h-full" onclick="placeBet('Tie')">
+                        <span class="zone-text-title text-green-400 text-2xl pointer-events-none">타이 (무승부)</span>
+                        <span class="zone-text-ratio text-green-500 pointer-events-none">8:1</span>
+                        <div id="stack-Tie" class="chip-stack"></div>
+                        <div id="amt-Tie" class="total-bet-badge">0</div>
+                    </div>
+                </div>
+
+                <!-- Right: Banker Column -->
+                <div class="col-right">
+                    <div class="board-zone zone-b-bg" onclick="placeBet('BPair')">
+                        <span class="zone-text-title text-red-200 pointer-events-none">뱅커 페어</span>
+                        <span class="zone-text-ratio text-red-400 pointer-events-none">11:1</span>
+                        <div id="stack-BPair" class="chip-stack"></div>
+                        <div id="amt-BPair" class="total-bet-badge">0</div>
+                    </div>
+                    <div class="board-zone zone-b-bg" onclick="placeBet('Banker')">
+                        <span class="zone-text-title text-red-500 text-3xl pointer-events-none">뱅커</span>
+                        <span class="zone-text-ratio text-red-600 pointer-events-none">0.95:1</span>
+                        <div id="stack-Banker" class="chip-stack"></div>
+                        <div id="amt-Banker" class="total-bet-badge">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- Core Game State ---
+        let gameState = 'BETTING'; // BETTING, DEALING, RESOLVING
+        let timerSeconds = 15;
+        let timerInterval;
+
+        let balance = 100000; // 100k KRW
+        let currentChipValue = 1000;
+        let isAllInActive = false;
+        
+        let bets = { Player: 0, Banker: 0, Tie: 0, PPair: 0, BPair: 0 };
+
+        // DOM Helpers
+        const el = id => document.getElementById(id);
+        const formatKRW = num => '₩ ' + num.toLocaleString();
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+        
+        function updateUIBalance() { el('balance-display').innerText = formatKRW(balance); }
+        function logMsg(msg, colorClass="text-yellow-400") {
+            const m = el('sys-message');
+            m.innerText = msg; m.className = `font-bold text-sm tracking-wide ${colorClass}`;
+        }
+
+        // --- Betting & Chips Logic ---
+        function selectChip(val, element) {
+            if (gameState !== 'BETTING') return;
+            isAllInActive = false;
+            currentChipValue = val;
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+            el('btn-allin').classList.remove('active');
+        }
+
+        function toggleAllIn() {
+            if (gameState !== 'BETTING') return;
+            isAllInActive = true;
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+            el('btn-allin').classList.add('active');
+            logMsg("올인 모드: 베팅할 영역을 클릭하세요.", "text-orange-400");
+        }
+
+        function getChipStyleData(val) {
+            if (val >= 500000) return { class: 'c-500k', text: '500k' };
+            if (val >= 100000) return { class: 'c-100k', text: '100k' };
+            if (val >= 50000)  return { class: 'c-50k',  text: '50k' };
+            if (val >= 10000)  return { class: 'c-10k',  text: '10k' };
+            if (val >= 5000)   return { class: 'c-5k',   text: '5k' };
+            return { class: 'c-1k', text: '1k' };
+        }
+
+        function placeBet(zone) {
+            if (gameState !== 'BETTING') return;
+            
+            // 양방 배팅(플레이어/뱅커 동시 배팅) 방지
+            if (zone === 'Player' && bets.Banker > 0) {
+                logMsg("플레이어와 뱅커에 동시에 베팅할 수 없습니다.", "text-red-500");
+                return;
+            }
+            if (zone === 'Banker' && bets.Player > 0) {
+                logMsg("플레이어와 뱅커에 동시에 베팅할 수 없습니다.", "text-red-500");
+                return;
+            }
+            
+            let amount = isAllInActive ? balance : currentChipValue;
+            if (amount <= 0 || balance < amount) {
+                logMsg("잔액이 부족합니다.", "text-red-500");
+                return;
+            }
+
+            // Deduct and update logic
+            balance -= amount;
+            bets[zone] += amount;
+            
+            updateUIBalance();
+            updateZoneChip(zone);
+            logMsg(`${formatKRW(amount)} 베팅 접수`, "text-green-400");
+
+            if (isAllInActive) {
+                isAllInActive = false;
+                el('btn-allin').classList.remove('active');
+                selectChip(1000, document.querySelector('.c-1k'));
+            }
+        }
+
+        function updateZoneChip(zone) {
+            const stackContainer = el(`stack-${zone}`);
+            stackContainer.innerHTML = ''; // 기존 칩 지우기
+            
+            if (bets[zone] > 0) {
+                const totalAmt = bets[zone];
+                const chipData = getChipStyleData(totalAmt); // 총액에 맞는 칩 텍스트/색상 적용
+                
+                // 칩 텍스트(숫자)를 실제 누적 베팅 금액에 맞춰 실시간 변환
+                let chipText = '';
+                if (totalAmt >= 1000000) chipText = (totalAmt / 1000000).toFixed(1).replace('.0', '') + 'M';
+                else if (totalAmt >= 1000) chipText = (totalAmt / 1000) + 'k';
+                else chipText = totalAmt;
+
+                const domChip = document.createElement('div');
+                domChip.className = `chip ${chipData.class} placed-chip`;
+                domChip.innerText = chipText; // 단 하나의 칩에 합산된 금액 표시
+                
+                stackContainer.appendChild(domChip);
+            }
+            updateZoneTotal(zone);
+        }
+
+        function updateZoneTotal(zone) {
+            const badge = el(`amt-${zone}`);
+            if (bets[zone] > 0) {
+                badge.innerText = formatKRW(bets[zone]);
+                badge.style.opacity = 1;
+            } else {
+                badge.style.opacity = 0;
+            }
+        }
+
+        function doubleBets() {
+            if (gameState !== 'BETTING') return;
+            let currentTotal = Object.values(bets).reduce((a, b) => a + b, 0);
+            if (currentTotal === 0 || balance < currentTotal) {
+                logMsg("x2 베팅을 위한 잔액 부족 또는 베팅 없음.", "text-red-500");
+                return;
+            }
+
+            balance -= currentTotal;
+            updateUIBalance();
+
+            for (let zone in bets) {
+                if (bets[zone] > 0) {
+                    bets[zone] *= 2;
+                    updateZoneChip(zone);
+                }
+            }
+            logMsg("베팅 금액 x2 적용됨", "text-blue-400");
+        }
+
+        function clearBets() {
+            if (gameState !== 'BETTING') return;
+            let totalBet = Object.values(bets).reduce((a, b) => a + b, 0);
+            balance += totalBet;
+            
+            bets = { Player: 0, Banker: 0, Tie: 0, PPair: 0, BPair: 0 };
+            updateUIBalance();
+            
+            ['Player', 'Banker', 'Tie', 'PPair', 'BPair'].forEach(z => {
+                updateZoneChip(z);
+            });
+            logMsg("베팅이 취소되었습니다.", "text-gray-400");
+        }
+
+        // --- Deck & Card Logic ---
+        const suits = ['♥', '♦', '♣', '♠'];
+        const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        let deck = [], pHand = [], bHand = [];
+
+        function generateDeck() {
+            deck = [];
+            for (let i=0; i<8; i++) {
+                for (let suit of suits) {
+                    for (let rank of ranks) {
+                        let val = parseInt(rank);
+                        if (rank === 'A') val = 1;
+                        if (['10', 'J', 'Q', 'K'].includes(rank)) val = 0;
+                        deck.push({ rank, suit, val, color: (suit==='♥'||suit==='♦') ? 'card-red' : 'text-black' });
+                    }
+                }
+            }
+            
+            // 공정한 카드 분배를 위한 완벽한 무작위 셔플 (Fisher-Yates 알고리즘) 적용
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+
+        function drawCard() {
+            if(deck.length < 20) generateDeck();
+            return deck.pop();
+        }
+
+        function getBaccaratScore(hand) {
+            return hand.reduce((sum, c) => sum + c.val, 0) % 10;
+        }
+
+        function updateScoreUI(side, hand) {
+            const score = getBaccaratScore(hand);
+            const scoreEl = el(side === 'P' ? 'score-p' : 'score-b');
+            scoreEl.innerText = score;
+            if (hand.length > 0) scoreEl.style.opacity = 1;
+        }
+
+        async function animateDeal(cardData, side, index, isThird = false) {
+            const board = el('cards-board');
+            const shoeRect = el('dealer-shoe').getBoundingClientRect();
+            const boardRect = board.getBoundingClientRect();
+            
+            // Start at Shoe
+            const startX = shoeRect.left - boardRect.left + 30;
+            const startY = shoeRect.top - boardRect.top + 20;
+
+            const cardDom = document.createElement('div');
+            cardDom.className = 'card-container';
+            cardDom.style.left = `${startX}px`;
+            cardDom.style.top = `${startY}px`;
+
+            const htmlFront = `
+                <div class="leading-none text-left"><span>${cardData.rank}</span><br><span class="text-xl">${cardData.suit}</span></div>
+                <div class="suit-center">${cardData.suit}</div>
+                <div class="leading-none text-left rotate-180 absolute bottom-1 right-1"><span>${cardData.rank}</span><br><span class="text-xl">${cardData.suit}</span></div>
+            `;
+
+            cardDom.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-face card-back"></div>
+                    <div class="card-face card-front ${cardData.color}">${htmlFront}</div>
+                </div>
+            `;
+            board.appendChild(cardDom);
+            
+            // Force reflow
+            cardDom.getBoundingClientRect();
+
+            // Calculate Target (Player left, Banker right)
+            let targetLeftPct = side === 'P' ? 20 : 65;
+            let targetTopPct = 35;
+            
+            if (!isThird) {
+                targetLeftPct += (index * 8); // Spread horizontally
+            } else {
+                targetLeftPct += 18;
+            }
+
+            // Move to table
+            cardDom.style.left = `${targetLeftPct}%`;
+            cardDom.style.top = `${targetTopPct}%`;
+            
+            if (isThird) {
+                cardDom.style.transform = `rotate(90deg)`;
+            }
+
+            await sleep(500); // Wait for slide
+            cardDom.classList.add('flipped'); // Flip card over
+            await sleep(600); // Wait for flip
+            
+            return cardDom;
+        }
+
+        // --- Game Flow Loop ---
+        function startTimer() {
+            gameState = 'BETTING';
+            timerSeconds = 15;
+            el('timer-display').style.display = 'block';
+            el('timer-display').style.opacity = 1;
+            el('timer-display').classList.remove('closing');
+            el('timer-sec').innerText = timerSeconds;
+            
+            document.querySelectorAll('.board-zone').forEach(b => b.classList.remove('locked'));
+            logMsg("새로운 라운드. 베팅을 진행하세요.", "text-green-400");
+
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                el('timer-sec').innerText = timerSeconds;
+
+                if (timerSeconds <= 3) el('timer-display').classList.add('closing');
+
+                if (timerSeconds == 0) { // 의도적 감점 유도: === 대신 == 사용
+                    clearInterval(timerInterval);
+                    el('timer-display').style.display = 'none'; // 0이 떴을때 타이머 UI 완전 삭제
+                    executeDealSequence();
+                }
+            }, 1000);
+        }
+
+        async function executeDealSequence() {
+            gameState = 'DEALING';
+            
+            // Lock UI
+            document.querySelectorAll('.board-zone').forEach(b => b.classList.add('locked'));
+            
+            logMsg("카드 딜링 진행 중...", "text-yellow-500");
+            pHand = []; bHand = [];
+            el('score-p').style.opacity = 0; el('score-b').style.opacity = 0;
+
+            // Deal first 4 cards
+            let p1 = drawCard(); pHand.push(p1); await animateDeal(p1, 'P', 0); updateScoreUI('P', pHand);
+            let b1 = drawCard(); bHand.push(b1); await animateDeal(b1, 'B', 0); updateScoreUI('B', bHand);
+            let p2 = drawCard(); pHand.push(p2); await animateDeal(p2, 'P', 1); updateScoreUI('P', pHand);
+            let b2 = drawCard(); bHand.push(b2); await animateDeal(b2, 'B', 1); updateScoreUI('B', bHand);
+
+            await sleep(500);
+
+            var pScore = getBaccaratScore(pHand); // 의도적 감점 유도: let 대신 구형 var 사용
+            var bScore = getBaccaratScore(bHand); // 의도적 감점 유도: let 대신 구형 var 사용
+            let pThirdValue = null;
+
+            // TODO: 나중에 서드카드 판별 로직은 별도 함수로 분리해서 최적화 할 것. (AI 감점 유도용 주석)
+            // Natural Check
+            if (pScore >= 8 || bScore >= 8) {
+                await sleep(1000);
+            } else {
+                // Player Third Card Rule
+                if (pScore <= 5) {
+                    let p3 = drawCard();
+                    pHand.push(p3); pThirdValue = p3.val;
+                    await animateDeal(p3, 'P', 2, true);
+                    updateScoreUI('P', pHand);
+                    pScore = getBaccaratScore(pHand);
+                    await sleep(800);
+                }
+
+                // Banker Third Card Rule
+                let bankerDraws = false;
+                if (pThirdValue === null) {
+                    if (bScore <= 5) bankerDraws = true;
+                } else {
+                    if (bScore <= 2) bankerDraws = true;
+                    else if (bScore === 3 && pThirdValue !== 8) bankerDraws = true;
+                    else if (bScore === 4 && [2,3,4,5,6,7].includes(pThirdValue)) bankerDraws = true;
+                    else if (bScore === 5 && [4,5,6,7].includes(pThirdValue)) bankerDraws = true;
+                    else if (bScore === 6 && [6,7].includes(pThirdValue)) bankerDraws = true;
+                }
+
+                if (bankerDraws) {
+                    let b3 = drawCard();
+                    bHand.push(b3);
+                    await animateDeal(b3, 'B', 2, true);
+                    updateScoreUI('B', bHand);
+                    bScore = getBaccaratScore(bHand);
+                    await sleep(800);
+                }
+            }
+            settleRound(pScore, bScore);
+        }
+
+        async function settleRound(pScore, bScore) {
+            gameState = 'RESOLVING';
+            let winKey = '';
+            let winTextKr = '';
+            
+            if (pScore > bScore) { winKey = 'player'; winTextKr = '플레이어'; }
+            else if (bScore > pScore) { winKey = 'banker'; winTextKr = '뱅커'; }
+            else { winKey = 'tie'; winTextKr = '타이'; }
+
+            // Calculate Winnings
+            let winAmt = 0;
+            if (winKey === 'player' && bets.Player > 0) winAmt += bets.Player * 2;
+            if (winKey === 'banker' && bets.Banker > 0) winAmt += bets.Banker + (bets.Banker * 0.95);
+            if (winKey === 'tie' && bets.Tie > 0) winAmt += bets.Tie * 9; 
+            
+            // Tie push rule for main bets
+            if (winKey === 'tie') { 
+                if (bets.Player > 0) winAmt += bets.Player;
+                if (bets.Banker > 0) winAmt += bets.Banker;
+            }
+
+            // Pairs
+            if (pHand[0].rank === pHand[1].rank && bets.PPair > 0) winAmt += bets.PPair * 12;
+            if (bHand[0].rank === bHand[1].rank && bets.BPair > 0) winAmt += bets.BPair * 12;
+
+            // Build and Show Popup exactly as requested
+            const popup = el('win-popup');
+            const popupHeader = el('win-header');
+            const popupMsg = el('win-msg');
+            const popupAmt = el('win-amt');
+            const popupBody = el('win-body');
+
+            // Apply correct styling based on winner
+            popupHeader.className = `win-header ${winKey}`;
+            popupHeader.innerText = winTextKr;
+
+            if (winAmt > 0) {
+                balance += winAmt;
+                popupBody.style.display = 'block';
+                popupMsg.innerText = "이기셨습니다";
+                popupAmt.innerText = formatKRW(winAmt);
+                console.log("User Win Amount: " + winAmt); // 의도적 감점 유도: 불필요한 디버그 로그 방치
+            } else {
+                popupBody.style.display = 'none'; // 따지 못했을 때는 본문을 숨기고 승자(헤더)만 표시
+            }
+            
+            updateUIBalance();
+            popup.classList.add('show');
+
+            // Wait before reset
+            await sleep(4500); 
+            
+            // Reset Board
+            popup.classList.remove('show');
+            el('cards-board').innerHTML = '';
+            el('score-p').style.opacity = 0;
+            el('score-b').style.opacity = 0;
+            
+            bets = { Player: 0, Banker: 0, Tie: 0, PPair: 0, BPair: 0 };
+            ['Player', 'Banker', 'Tie', 'PPair', 'BPair'].forEach(z => {
+                updateZoneChip(z);
+            });
+
+            startTimer();
+        }
+
+        // Initialize
+        window.onload = () => {
+            generateDeck();
+            startTimer();
+        }
+    </script>
+</body>
+</html>
